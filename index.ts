@@ -4,67 +4,108 @@ type Concat<T1 extends string[], T2 extends string[]> = [
 ]
 
 declare class EVar<const _1 extends string = any> {
-  public __evar: null
+  EVar: null
 }
+
 declare class ELit<const _1 extends Lit = any> {
-  public __elit: null
+  ELit: null
 }
+
 declare class EApp<
   const _1 extends Lit = any,
   const _2 extends Exp = any
 > {
-  public __eapp: null
+  EApp: null
 }
+
 declare class ELet<
   const _1 extends string = any,
   const _2 extends Exp = any,
   const _3 extends Exp = any
 > {
-  public __elet: null
+  ELet: null
 }
 
 type Exp = EVar | ELit | EApp | ELet
 
 declare class LInt<const _ extends number = any> {
-  public __lint: null
+  LInt: null
 }
 declare class LBool<const _ extends boolean = any> {
-  public __lbool: null
+  LBool: null
 }
 
 type Lit = LInt | LBool
 
 declare class TVar<const _1 extends string = any> {
-  public __tvar: null
+  TVar: null
 }
+
 declare class TInt {
-  public __tint: null
+  TInt: null
 }
+
 declare class TBool {
-  public __tbool: null
+  TBool: null
 }
+
 declare class TFun<
   const _1 extends Type = any,
   const _2 extends Type = any
 > {
-  public __tfun: null
+  TFun: null
 }
 
 type Type = TVar | TInt | TBool | TFun
+
+type Subst = Record<string, Type>
 
 declare class Scheme<
   const _1 extends string[] = any,
   const _2 extends Type = any
 > {
-  public __scheme: null
+  Scheme: null
 }
 
-type ftv<T extends Type> =
-  T extends TVar<infer n> ? [n]
-  : T extends TInt | TBool ? []
-  : T extends TFun<infer t1, infer t2> ?
-    // @ts-expect-error nah we good
-    Concat<ftv<t1>, ftv<t2>>
-  : never
+declare namespace Map {
+  export type Get<
+    R extends Record<string, any>,
+    K extends string
+  > = K extends keyof R ? R[K] : never
 
-type R3 = ftv<TFun<TBool, TFun<TVar<"x">, TVar<"y">>>>
+  export type Contains<
+    R extends Record<string, any>,
+    K extends string
+  > = K extends keyof R ? true : false
+}
+
+declare namespace Types {
+  export type FTV<T extends Type> =
+    T extends TVar<infer N> ? [N]
+    : T extends TInt | TBool ? []
+    : T extends TFun<infer t1, infer t2> ?
+      // @ts-expect-error nah we good
+      Concat<FTV<t1>, FTV<t2>>
+    : never
+
+  export type Apply<S extends Subst, T extends Type> =
+    T extends TVar<infer N> ?
+      Map.Contains<S, N> extends true ?
+        S[N]
+      : T
+    : T extends TFun<infer T1, infer T2> ?
+      [Apply<S, T1>, Apply<S, T2>] extends (
+        [infer T1_ extends Type, infer T2_ extends Type]
+      ) ?
+        TFun<T1_, T2_>
+      : never
+    : T
+}
+
+type TFunExample = TFun<TBool, TFun<TVar<"x">, TVar<"y">>>
+
+// type _  = Types.FTV<TFunExample>
+type _ = Types.Apply<{}, TFunExample>
+
+type asdf = TVar<"a">
+type __ = Types.Apply<{}, asdf>
