@@ -63,7 +63,7 @@ type ftv<T extends Type> =
   T extends TVar<infer n> ? [n]
   : T extends TInt | TBool ? []
   : T extends TFun<infer t1, infer t2> ?
-    // @ts-ignore
+    // @ts-expect-error nah we good
     Concat<ftv<t1>, ftv<t2>>
   : never
 
